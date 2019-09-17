@@ -1,5 +1,5 @@
 {
-  "name": "softcommerce/omnipay-paytrace",
+  "name": "clarity-code/omnipay-paytrace",
   "type": "library",
   "description": "PayTrace gateway for the Omnipay v3.0 payment processing library",
   "keywords": [
