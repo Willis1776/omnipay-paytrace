@@ -2,6 +2,8 @@
 
 namespace Omnipay\Paytrace\Message;
 
+use Omnipay\Paytrace\Message\Check\Response;
+
 abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest
 {
     protected $method;
@@ -15,14 +17,17 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest
             'Content-type' => 'application/x-www-form-urlencoded',
             'Contenttransfer-encoding' => 'text',
         ];
-        $httpResponse = $this->httpClient->post(
-            $this->getEndpoint(),
-            $headers,
-            'parmlist=' . $this->preparePostData($data)
-        )
-            ->send();
-        $responseClass = $this->responseClass;
-        return $this->response = new $responseClass($this, $httpResponse->getBody());
+        
+        $response = $this->httpClient->request('POST', $this->getEndpoint(), $headers, 'parmlist=' . http_build_query($data, '', '&'));
+
+        // $responseClass = $this->responseClass;
+
+        return $this->createResponse($response->getBody()->getContents());
+    }
+
+    protected function createResponse($data)
+    {
+        return $this->response = new Response($this, $data);
     }
 
     public function getUserName()

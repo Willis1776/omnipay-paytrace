@@ -1,0 +1,4 @@
+parameters:
+    git_dir: ../../Code/Omnipay_paytrace
+    bin_dir: vendor/bin
+    tasks: {  }

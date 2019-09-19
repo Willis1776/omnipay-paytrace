@@ -11,8 +11,8 @@ class CheckGatewayTest extends \Omnipay\Tests\GatewayTestCase
     public function setUp()
     {
         $this->gateway = new CheckGateway($this->getHttpClient(), $this->getHttpRequest());
-        $this->gateway->setPassword('demo123')
-            ->setUserName('demo123')
+        $this->gateway->setPassword('mwillis@huntelectric.com')
+            ->setUserName('MWP347!mwp')
             ->setTestMode(true);
         $this->options = [
             'amount' => '10.00',
