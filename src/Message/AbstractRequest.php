@@ -2,7 +2,7 @@
 
 namespace Omnipay\Paytrace\Message;
 
-use Omnipay\Paytrace\Message\Check\Response;
+use Omnipay\Common\Exception\InvalidResponseException;
 
 abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest
 {
@@ -12,17 +12,48 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest
 
     public function sendData($data)
     {
-        $headers = [
-            'MIME-Version' => '1.0',
-            'Content-type' => 'application/x-www-form-urlencoded',
-            'Contenttransfer-encoding' => 'text',
-        ];
+        $body = $this->toJSON($data);
+        $requestUrl = $this->getEndpoint();
         
-        $response = $this->httpClient->request('POST', $this->getEndpoint(), $headers, 'parmlist=' . http_build_query($data, '', '&'));
+        try {
+            $httpResponse = $this->httpClient->request(
+                $this->getHttpMethod(),
+                $this->getEndpoint(),
+                array(
+                    'Accept' => 'application/json',
+                    'Authorization' => 'Bearer ' . $this->getToken(),
+                    'Content-type' => 'application/json',
+                ),
+                $body
+            );
 
-        // $responseClass = $this->responseClass;
+            $body = (string) $httpResponse->getBody()->getContents();
+            $jsonToArrayResponse = !empty($body) ? json_decode($body, true) : array();
 
-        return $this->createResponse($response->getBody()->getContents());
+            return $this->response = $this->createResponse($jsonToArrayResponse, $httpResponse->getStatusCode());
+
+        } catch (\Exception $e) {
+            throw new InvalidResponseException(
+                'Error communicating with payment gateway: ' . $e->getMessage(),
+                $e->getCode()
+            );
+        }
+    }
+
+    protected function getHttpMethod()
+    {
+        return 'POST';
+    }
+
+    public function toJSON($data, $options = 0)
+    {
+        // Because of PHP Version 5.3, we cannot use JSON_UNESCAPED_SLASHES option
+        // Instead we would use the str_replace command for now.
+        // TODO: Replace this code with return json_encode($this->toArray(), $options | 64); once we support PHP >= 5.4
+        if (version_compare(phpversion(), '5.4.0', '>=') === true) {
+            return json_encode($data, $options | 64);
+        }
+        return str_replace('\\/', '/', json_encode($data, $options));
     }
 
     protected function createResponse($data)
@@ -48,6 +79,16 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest
     public function setPassword($value)
     {
         return $this->setParameter('password', $value);
+    }
+
+    public function getToken()
+    {
+        return $this->getParameter('token');
+    }
+
+    public function setToken($value)
+    {
+        return $this->setParameter('token', $value);
     }
 
     public function getEndpoint()
